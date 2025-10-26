@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'form',
+    'chatbot.apps.ChatbotConfig',
 ]
 
 MIDDLEWARE = [
@@ -107,10 +108,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'templates/static'),)
-STATIC_ROOT = os.path.join('static')
+STATIC_ROOT = (os.path.join('static'))
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = "/media/"
+
+DATA_DIR = BASE_DIR / "data"
+
+CHATBOT_CONTATOS_FILE = DATA_DIR / "contatos.json"
+
+os.makedirs(DATA_DIR, exist_ok=True)
+
+CHATBOT_CONTATOS_FILE = DATA_DIR / "contatos.json"
 
 
 # Default primary key field type
