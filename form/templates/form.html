@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulário - Savepoint</title>
+</head>
+<body>
+    <h1>Registro de Participação</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">Enviar Resposta</button>
+    </form>
+
+    {% if form.errors %}
+        <p style="color: red;">Por favor, corrija os erros abaixo.</p>
+    {% endif %}
+
+</body>
+</html>
