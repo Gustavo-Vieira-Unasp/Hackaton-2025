@@ -2,7 +2,38 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Formulário - Savepoint</title>
+    <title>Formulário de Participação</title>
+    <style>
+        /* ESTILO PARA OCULTAR O CONTEÚDO NO INÍCIO */
+        #div-quantidade-pessoas {
+            display: none;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            margin-top: 10px;
+            padding: 0 10px;
+        }
+        /* ESTILO PARA EXIBIR O CONTEÚDO */
+        #div-quantidade-pessoas.visible {
+            display: block;
+            max-height: 100px;
+            opacity: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        #participacao-field label {
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        /* Estilo para a mensagem de erro em tempo real */
+        .real-time-error {
+            color: #d9534f; /* Vermelho forte */
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
     <h1>Registro de Participação</h1>
@@ -10,14 +41,125 @@
     <form method="post">
         {% csrf_token %}
 
-        {{ form.as_p }}
+        <div id="participacao-field">
+            <p>{{ form.tipo_participacao.label_tag }}</p>
+            
+            {% for radio in form.tipo_participacao %}
+                <label for="{{ radio.id_for_label }}">
+                    {{ radio.tag }} {{ radio.choice_label }}
+                </label>
+            {% endfor %}
+            <br>
+        </div>
 
-        <button type="submit">Enviar Resposta</button>
+        <div id="div-quantidade-pessoas">
+            {{ form.quantidade_pessoas.as_p }}
+            <div id="quantidade-error" class="real-time-error"></div>
+        </div>
+        
+        {% if form.errors %}
+            <div style="color: red; border: 1px solid red; padding: 10px; margin-top: 15px;">
+                <strong>Por favor, corrija os erros do Django no POST:</strong>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <button type="submit" id="submit-button">Enviar Resposta</button>
     </form>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const radios = document.querySelectorAll('#participacao-field input[type="radio"]');
+            const divQuantidade = document.getElementById('div-quantidade-pessoas');
+            const inputQuantidade = document.getElementById('id_quantidade_pessoas');
+            const quantidadeError = document.getElementById('quantidade-error');
+            const submitButton = document.getElementById('submit-button');
 
-    {% if form.errors %}
-        <p style="color: red;">Por favor, corrija os erros abaixo.</p>
-    {% endif %}
+            // Chave para salvar no sessionStorage
+            const STORAGE_KEY = 'grupo_quantidade';
 
+            // --- Lógica de Validação e Armazenamento em Tempo Real ---
+            function validateAndStoreQuantity() {
+                const value = parseInt(inputQuantidade.value);
+                
+                // 1. Limpa o estado anterior
+                quantidadeError.textContent = '';
+                let isValid = true;
+
+                if (inputQuantidade.value.trim() === '') {
+                    // Valor vazio é permitido temporariamente (o Django validará no submit)
+                    sessionStorage.removeItem(STORAGE_KEY);
+                    isValid = false;
+                } else if (isNaN(value) || value <= 1) {
+                    // 2. Validação: deve ser um número e maior que 1
+                    quantidadeError.textContent = 'O número de pessoas deve ser maior que 1.';
+                    inputQuantidade.focus(); // Foca no campo para corrigir
+                    sessionStorage.removeItem(STORAGE_KEY);
+                    isValid = false;
+                } else {
+                    // 3. Se for válido (maior que 1)
+                    // Armazena no sessionStorage
+                    sessionStorage.setItem(STORAGE_KEY, value);
+                    console.log(`[Frontend] Quantidade de pessoas guardada: ${value}`);
+                }
+                
+                // Habilita/Desabilita o botão de submit (opcional, mas boa prática)
+                // submitButton.disabled = !isValid; 
+            }
+
+            // --- Lógica do Sanfonado (Visual) ---
+            function toggleQuantidade() {
+                const checkedRadio = Array.from(radios).find(radio => radio.checked);
+                const isGroup = checkedRadio && checkedRadio.value === 'GRUPO';
+
+                if (isGroup) {
+                    divQuantidade.classList.add('visible');
+                    
+                    // Se o campo for visível, carregue o valor guardado
+                    const storedValue = sessionStorage.getItem(STORAGE_KEY);
+                    if (storedValue) {
+                        inputQuantidade.value = storedValue;
+                        // Valida imediatamente ao carregar o valor guardado
+                        validateAndStoreQuantity();
+                    } else if (!inputQuantidade.value) {
+                         // Se não tiver valor guardado nem no input, inicialize com um valor não válido para forçar o preenchimento (se quiser)
+                         // inputQuantidade.value = '';
+                         validateAndStoreQuantity();
+                    }
+                    
+                } else {
+                    divQuantidade.classList.remove('visible');
+                    quantidadeError.textContent = '';
+                }
+            }
+            
+            // --- Listeners de Evento ---
+
+            // 1. Listener para o clique nos rádio buttons (efeito sanfona)
+            radios.forEach(radio => {
+                radio.addEventListener('change', toggleQuantidade);
+            });
+
+            // 2. Listener para o campo de número (captura em tempo real)
+            if (inputQuantidade) {
+                inputQuantidade.addEventListener('input', validateAndStoreQuantity);
+            }
+
+            // A. Inicializa o estado visual e o valor (ao carregar a página)
+            toggleQuantidade();
+            
+            // Se o formulário voltou devido a um erro de validação do Django (POST),
+            // a quantidade já estará no input, então precisamos validá-la.
+            if (inputQuantidade && inputQuantidade.value) {
+                 validateAndStoreQuantity();
+            }
+        });
+    </script>
 </body>
 </html>
