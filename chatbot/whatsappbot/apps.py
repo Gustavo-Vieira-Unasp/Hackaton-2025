@@ -1,12 +1,11 @@
 from django.apps import AppConfig
 import os
 
-class ChatbotConfig(AppConfig):
+class WhatsappbotConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "chatbot"
+    name = "whatsappbot"
 
     def ready(self):
-        # Evita rodar duas vezes em modo debug do runserver
         if os.environ.get("RUN_MAIN") == "true":
             from .tasks import start_scheduler
             start_scheduler()
