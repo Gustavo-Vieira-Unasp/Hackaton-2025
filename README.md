@@ -63,3 +63,20 @@ https://www.youtube.com/watch?v=Vkm0O4B-vts&t=1992s (video de exemplo flutter + 
 https://docs.flutter.dev/get-started/quick
 https://developer.android.com/studio?hl=pt-br (nao é necessario para todos)
 flask ou fastapi
+
+Flutter (atual)
+import 'package:flutter/material.dart';
+
+Flutter (quando chamar API)
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+FastAPI backend (atual) (pode ser flask)
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+1-FastAPI backend (quando tiver entrada de dados / modelos) (pode ser flask)
+from fastapi import FastAPI, Body
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
