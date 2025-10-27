@@ -4,35 +4,36 @@ import threading
 import time
 import datetime
 import pandas as pd
-import pywhatkit
 import schedule
-from django.conf import settings  # pega caminhos do settings
+from django.conf import settings 
 
-# -----------------------
-# LOG EM MEMÓRIA
-# -----------------------
-LOG_BUFFER = []  # últimas mensagens de log (mostradas na página /chatbot/status/)
+try:
+    import pywhatkit
+except ModuleNotFoundError:
+    print("\n\n[ERRO CRÍTICO DE AMBIENTE] Módulo 'pywhatkit' não encontrado!")
+    print("O agendador de WhatsApp NÃO VAI FUNCIONAR até que você resolva o problema de PATH.")
+    pywhatkit = None
+
+
+LOG_BUFFER = [] 
 
 def log(msg: str):
     """Adiciona uma linha de log com timestamp e guarda em memória para a view."""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{timestamp}] {msg}"
-    print(line)  # ainda printa no console
+    print(line) 
     LOG_BUFFER.append(line)
-    # limita tamanho do buffer pra não ficar infinito
     if len(LOG_BUFFER) > 200:
         del LOG_BUFFER[0:len(LOG_BUFFER)-200]
 
-
-# Caminho do arquivo de contatos definido no settings.py
 CAMINHO_ARQUIVO = settings.CHATBOT_CONTATOS_FILE
 
 MENSAGEM_DIA_UTIL = "Olá {nome}! 😊 Agradecemos pela sua visita ao SavePoint ontem! Esperamos te ver novamente em breve!"
 MENSAGEM_FIM_DE_SEMANA = "Olá {nome}! 👾 Valeu por passar no SavePoint! Esperamos te ver de novo!"
 
-INTERVALO_ENTRE_MSGS = 10  # segundos entre cada envio
-HORARIO_INICIO = 9         # horário comercial - início
-HORARIO_FIM = 18           # horário comercial - fim
+INTERVALO_ENTRE_MSGS = 10 
+HORARIO_INICIO = 9 
+HORARIO_FIM = 18 
 
 
 def carregar_contatos_json(caminho_json):
@@ -41,7 +42,7 @@ def carregar_contatos_json(caminho_json):
     com pelo menos: Nome, Telefone, Data_Visita.
     Retorna None se der erro.
     """
-    caminho_json = str(caminho_json)  # garante string
+    caminho_json = str(caminho_json) 
     if not os.path.isfile(caminho_json):
         log(f"[ERRO] Não encontrei o arquivo {caminho_json}")
         return None
@@ -80,13 +81,17 @@ def enviar_whatsapp_para_contatos(contatos_filtrados, mensagem_base):
     Recebe um DataFrame já filtrado e manda mensagem pra cada contato.
     Usa pywhatkit (WhatsApp Web precisa estar logado).
     """
+    if pywhatkit is None:
+        log("[ERRO] O módulo pywhatkit falhou ao carregar. Não é possível enviar mensagens.")
+        return
+
     if contatos_filtrados.empty:
         log("[INFO] Ninguém visitou ontem. Nada para enviar.")
         return
 
     log(f"[*] Visitantes encontrados ontem ({len(contatos_filtrados)}):")
     for _, row in contatos_filtrados.iterrows():
-        log(f"    - {row['Nome']} {row['Telefone']}")
+        log(f"      - {row['Nome']} {row['Telefone']}")
 
     for _, row in contatos_filtrados.iterrows():
         nome = str(row["Nome"]).strip()
@@ -116,19 +121,17 @@ def job_dias_uteis():
     """
     agora = datetime.datetime.now()
     ontem = (agora - datetime.timedelta(days=1)).date()
-    dia_semana = agora.weekday()   # 0=seg ... 6=dom
+    dia_semana = agora.weekday()
     hora_atual = agora.hour
 
     log("=== [JOB DIAS ÚTEIS] ===")
     log(f"Data/hora agora: {agora}")
     log("Verificando regras de dia útil e horário comercial...")
 
-    # Bloqueia sábado/domingo
     if dia_semana >= 5:
         log("[BLOQUEADO] Hoje não é dia útil (é sábado/domingo).")
         return
 
-    # Bloqueia fora do horário comercial
     if not (HORARIO_INICIO <= hora_atual < HORARIO_FIM):
         log(f"[BLOQUEADO] Agora são {hora_atual}h, fora do horário comercial {HORARIO_INICIO}-{HORARIO_FIM}.")
         return
@@ -154,13 +157,12 @@ def job_fim_de_semana():
     """
     agora = datetime.datetime.now()
     ontem = (agora - datetime.timedelta(days=1)).date()
-    dia_semana = agora.weekday()  # 5=sáb, 6=dom
+    dia_semana = agora.weekday()
 
     log("=== [JOB FIM DE SEMANA] ===")
     log(f"Data/hora agora: {agora}")
     log("Verificando se hoje é fim de semana...")
 
-    # Bloqueia segunda-sexta
     if dia_semana < 5:
         log("[BLOQUEADO] Hoje é dia útil (seg-sex). Esse job é só fim de semana.")
         return
@@ -183,17 +185,14 @@ def configurar_agendamento():
     """
     Registra os horários em que cada job roda.
     """
-    # dias úteis às 16:30
     schedule.every().monday.at("16:30").do(job_dias_uteis)
     schedule.every().tuesday.at("16:30").do(job_dias_uteis)
     schedule.every().wednesday.at("16:30").do(job_dias_uteis)
     schedule.every().thursday.at("16:30").do(job_dias_uteis)
     schedule.every().friday.at("16:30").do(job_dias_uteis)
 
-    # fim de semana às 16:00
     schedule.every().saturday.at("16:00").do(job_fim_de_semana)
-    schedule.every().sunday.at("05:23" \
-    "").do(job_fim_de_semana)
+    schedule.every().sunday.at("06:27").do(job_fim_de_semana)
 
     log("BOT AGENDADO ✅")
     log(" - Seg-Sex às 16h30 -> envia modo dia útil.")
@@ -213,7 +212,7 @@ _scheduler_started = False
 def start_scheduler():
     """
     Chamada pelo apps.py quando o Django sobe.
-    Garante que só criamos UMA thread do agendador.
+    Garanti que só criamos UMA thread do agendador.
     """
     global _scheduler_started
     if _scheduler_started:

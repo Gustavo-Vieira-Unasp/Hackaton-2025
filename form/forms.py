@@ -6,9 +6,6 @@ TIPO_PARTICIPACAO_CHOICES = [
 ]
 
 class ParticipacaoForm(forms.Form):
-    """
-    Formulário para registrar a participação (individual ou grupo).
-    """
     tipo_participacao = forms.ChoiceField(
         choices=TIPO_PARTICIPACAO_CHOICES,
         widget=forms.RadioSelect,
@@ -16,24 +13,23 @@ class ParticipacaoForm(forms.Form):
     )
     
     quantidade_pessoas = forms.IntegerField(
-        min_value=1,
+        min_value=2, 
         required=False,
-        label="Quantas pessoas há no seu grupo?",
-        widget=forms.NumberInput(attrs={'placeholder': 'Digite o número'})
+        label="Quantas pessoas há no seu grupo? (Mínimo 2)",
+        widget=forms.NumberInput(attrs={'placeholder': 'Digite o número', 'min': 2})
     )
 
     def clean(self):
-        """
-        Garante que o campo 'quantidade_pessoas' seja preenchido se 'GRUPO' for escolhido.
-        """
         cleaned_data = super().clean()
         tipo = cleaned_data.get('tipo_participacao')
         quantidade = cleaned_data.get('quantidade_pessoas')
 
         if tipo == 'GRUPO':
             if not quantidade:
-                self.add_error('quantidade_pessoas', 'Este campo é obrigatório para participação em grupo.')
-            
+                self.add_error('quantidade_pessoas', 'Por favor, informe o número de pessoas no grupo (mínimo 2).')
+            elif quantidade < 2: 
+                 self.add_error('quantidade_pessoas', 'A participação em grupo deve ter no mínimo 2 pessoas.')
+        
         elif tipo == 'SOZINHO':
              cleaned_data['quantidade_pessoas'] = 1
              

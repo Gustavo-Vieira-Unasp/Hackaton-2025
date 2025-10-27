@@ -1,3 +1,5 @@
+# form/views.py (Conteúdo OK)
+
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from .forms import ParticipacaoForm

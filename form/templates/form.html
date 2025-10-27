@@ -1,165 +1,282 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Formulário de Participação</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ESTILO PARA OCULTAR O CONTEÚDO NO INÍCIO */
-        #div-quantidade-pessoas {
-            display: none;
-            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        /* Estilo para a transição sanfonada */
+        .accordion-content {
             max-height: 0;
             overflow: hidden;
+            transition: max-height 0.4s ease-in-out;
+        }
+        .accordion-content.active {
+            max-height: 100px; /* Suficiente para o input */
+        }
+        .input-hidden {
             opacity: 0;
-            margin-top: 10px;
-            padding: 0 10px;
-        }
-        /* ESTILO PARA EXIBIR O CONTEÚDO */
-        #div-quantidade-pessoas.visible {
-            display: block;
-            max-height: 100px;
-            opacity: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
-
-        #participacao-field label {
-            margin-right: 20px;
-            cursor: pointer;
-        }
-        /* Estilo para a mensagem de erro em tempo real */
-        .real-time-error {
-            color: #d9534f; /* Vermelho forte */
-            font-size: 0.9em;
-            margin-top: 5px;
+            height: 0;
+            padding: 0 !important;
+            margin: 0 !important;
+            transition: opacity 0.3s, height 0.3s;
         }
     </style>
 </head>
-<body>
-    <h1>Registro de Participação</h1>
+<body class="p-4 flex justify-center items-center min-h-screen">
 
-    <form method="post">
-        {% csrf_token %}
+    <div id="message-box" class="fixed top-5 left-1/2 transform -translate-x-1/2 p-3 bg-green-500 text-white rounded-lg shadow-lg hidden z-50"></div>
 
-        <div id="participacao-field">
-            <p>{{ form.tipo_participacao.label_tag }}</p>
-            
-            {% for radio in form.tipo_participacao %}
-                <label for="{{ radio.id_for_label }}">
-                    {{ radio.tag }} {{ radio.choice_label }}
+    <div class="w-full max-w-lg bg-white p-6 md:p-8 rounded-xl shadow-2xl border border-gray-100">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">
+            Cadastro de Visitante
+        </h1>
+        <form id="registrationForm" class="space-y-6">
+
+            <!-- 1. Seleção de Tipo (Rádio) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Cadastro <span class="text-red-500">*</span>
                 </label>
-            {% endfor %}
-            <br>
-        </div>
-
-        <div id="div-quantidade-pessoas">
-            {{ form.quantidade_pessoas.as_p }}
-            <div id="quantidade-error" class="real-time-error"></div>
-        </div>
-        
-        {% if form.errors %}
-            <div style="color: red; border: 1px solid red; padding: 10px; margin-top: 15px;">
-                <strong>Por favor, corrija os erros do Django no POST:</strong>
-                <ul>
-                    {% for field in form %}
-                        {% for error in field.errors %}
-                            <li>{{ field.label }}: {{ error }}</li>
-                        {% endfor %}
-                    {% endfor %}
-                </ul>
+                <div class="flex space-x-6">
+                    <div class="flex items-center">
+                        <input id="type-interno" name="user_type" type="radio" value="interno" required
+                               class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                        <label for="type-interno" class="ml-2 block text-sm font-medium text-gray-700">
+                            Interno (Aluno/Funcionário)
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="type-externo" name="user_type" type="radio" value="externo" required
+                               class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                        <label for="type-externo" class="ml-2 block text-sm font-medium text-gray-700">
+                            Externo (Público Geral)
+                        </label>
+                    </div>
+                </div>
             </div>
-        {% endif %}
 
-        <button type="submit" id="submit-button">Enviar Resposta</button>
-    </form>
-    
+            <!-- 2. Campos Condicionais (Efeito Sanfonado) -->
+            <div id="conditional-fields">
+                
+                <!-- Campo RA (Interno) -->
+                <div id="ra-group" class="accordion-content transition-all duration-300 ease-in-out input-hidden">
+                    <label for="ra" class="block text-sm font-medium text-gray-700 mb-1 pt-2">
+                        RA (Registro Acadêmico) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="ra" name="ra" placeholder="Ex: 1234567"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <!-- Campo Telefone (Externo) -->
+                <div id="phone-group" class="accordion-content transition-all duration-300 ease-in-out input-hidden">
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1 pt-2">
+                        Telefone (WhatsApp) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="tel" id="phone" name="phone" placeholder="Ex: +5511987654321"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+            </div>
+
+            <!-- 3. Nome Completo (Sempre visível) -->
+            <div>
+                <label for="full_name" class="block text-sm font-medium text-gray-700">
+                    Nome Completo <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="full_name" name="full_name" required placeholder="Seu nome"
+                       class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <!-- 4. Seleção de Interesses (Checkboxes dinâmicos) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Interesses (Selecione quantos quiser)
+                </label>
+                <div id="interests-container" class="grid grid-cols-2 gap-3 bg-gray-50 p-4 rounded-lg border">
+                    <!-- Checkboxes serão inseridos aqui pelo JavaScript -->
+                    <p class="text-center text-sm text-gray-500 col-span-2">Carregando interesses...</p>
+                </div>
+            </div>
+            
+            <!-- 5. Botão de Envio -->
+            <button type="submit"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out transform hover:scale-[1.01]">
+                Registrar Visita e Baixar Dados
+            </button>
+        </form>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const radios = document.querySelectorAll('#participacao-field input[type="radio"]');
-            const divQuantidade = document.getElementById('div-quantidade-pessoas');
-            const inputQuantidade = document.getElementById('id_quantidade_pessoas');
-            const quantidadeError = document.getElementById('quantidade-error');
-            const submitButton = document.getElementById('submit-button');
+        // Conteúdo do JSON (data/interesses.json) para que o aplicativo seja single-file
+        const INTERESTS_DATA = [
+            "Cartas",
+            "Tabuleiro",
+            "Quebra-Cabeça",
+            "Video-Game",
+            "Xadrez",
+            "RPG de Mesa",
+            "Jogos de Estratégia"
+        ];
+        
+        // Elementos DOM
+        const form = document.getElementById('registrationForm');
+        const raGroup = document.getElementById('ra-group');
+        const raInput = document.getElementById('ra');
+        const phoneGroup = document.getElementById('phone-group');
+        const phoneInput = document.getElementById('phone');
+        const interestsContainer = document.getElementById('interests-container');
+        const radios = document.querySelectorAll('input[name="user_type"]');
+        const msgBox = document.getElementById('message-box');
 
-            // Chave para salvar no sessionStorage
-            const STORAGE_KEY = 'grupo_quantidade';
-
-            // --- Lógica de Validação e Armazenamento em Tempo Real ---
-            function validateAndStoreQuantity() {
-                const value = parseInt(inputQuantidade.value);
-                
-                // 1. Limpa o estado anterior
-                quantidadeError.textContent = '';
-                let isValid = true;
-
-                if (inputQuantidade.value.trim() === '') {
-                    // Valor vazio é permitido temporariamente (o Django validará no submit)
-                    sessionStorage.removeItem(STORAGE_KEY);
-                    isValid = false;
-                } else if (isNaN(value) || value <= 1) {
-                    // 2. Validação: deve ser um número e maior que 1
-                    quantidadeError.textContent = 'O número de pessoas deve ser maior que 1.';
-                    inputQuantidade.focus(); // Foca no campo para corrigir
-                    sessionStorage.removeItem(STORAGE_KEY);
-                    isValid = false;
-                } else {
-                    // 3. Se for válido (maior que 1)
-                    // Armazena no sessionStorage
-                    sessionStorage.setItem(STORAGE_KEY, value);
-                    console.log(`[Frontend] Quantidade de pessoas guardada: ${value}`);
-                }
-                
-                // Habilita/Desabilita o botão de submit (opcional, mas boa prática)
-                // submitButton.disabled = !isValid; 
-            }
-
-            // --- Lógica do Sanfonado (Visual) ---
-            function toggleQuantidade() {
-                const checkedRadio = Array.from(radios).find(radio => radio.checked);
-                const isGroup = checkedRadio && checkedRadio.value === 'GRUPO';
-
-                if (isGroup) {
-                    divQuantidade.classList.add('visible');
-                    
-                    // Se o campo for visível, carregue o valor guardado
-                    const storedValue = sessionStorage.getItem(STORAGE_KEY);
-                    if (storedValue) {
-                        inputQuantidade.value = storedValue;
-                        // Valida imediatamente ao carregar o valor guardado
-                        validateAndStoreQuantity();
-                    } else if (!inputQuantidade.value) {
-                         // Se não tiver valor guardado nem no input, inicialize com um valor não válido para forçar o preenchimento (se quiser)
-                         // inputQuantidade.value = '';
-                         validateAndStoreQuantity();
-                    }
-                    
-                } else {
-                    divQuantidade.classList.remove('visible');
-                    quantidadeError.textContent = '';
-                }
-            }
+        /**
+         * Exibe uma mensagem de feedback na tela (substitui o alert()).
+         * @param {string} message 
+         * @param {string} type 'success' ou 'error'
+         */
+        function showMessage(message, type = 'success') {
+            msgBox.textContent = message;
+            msgBox.classList.remove('hidden', 'bg-green-500', 'bg-red-500');
+            msgBox.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
             
-            // --- Listeners de Evento ---
+            // Centraliza a caixa de mensagem
+            msgBox.style.left = '50%';
+            msgBox.style.transform = 'translateX(-50%)';
 
-            // 1. Listener para o clique nos rádio buttons (efeito sanfona)
-            radios.forEach(radio => {
-                radio.addEventListener('change', toggleQuantidade);
+            setTimeout(() => {
+                msgBox.classList.add('hidden');
+            }, 5000);
+        }
+
+        /**
+         * Renderiza dinamicamente os checkboxes de interesses.
+         */
+        function renderInterests() {
+            interestsContainer.innerHTML = ''; // Limpa o "Carregando..."
+
+            INTERESTS_DATA.forEach((interest, index) => {
+                const id = `interest-${index}`;
+                const html = `
+                    <div class="flex items-center">
+                        <input id="${id}" name="interests" type="checkbox" value="${interest}"
+                               class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                        <label for="${id}" class="ml-2 text-sm font-medium text-gray-700 cursor-pointer select-none">
+                            ${interest}
+                        </label>
+                    </div>
+                `;
+                interestsContainer.innerHTML += html;
             });
+        }
 
-            // 2. Listener para o campo de número (captura em tempo real)
-            if (inputQuantidade) {
-                inputQuantidade.addEventListener('input', validateAndStoreQuantity);
-            }
+        /**
+         * Lida com a alternância entre campos RA e Telefone (efeito sanfonado).
+         * @param {string} userType 'interno' ou 'externo'
+         */
+        function handleUserTypeChange(userType) {
+            const isInternal = userType === 'interno';
 
-            // A. Inicializa o estado visual e o valor (ao carregar a página)
-            toggleQuantidade();
+            // 1. Alterna o campo RA
+            raGroup.classList.toggle('active', isInternal);
+            raGroup.classList.toggle('input-hidden', !isInternal);
+            raInput.required = isInternal;
             
-            // Se o formulário voltou devido a um erro de validação do Django (POST),
-            // a quantidade já estará no input, então precisamos validá-la.
-            if (inputQuantidade && inputQuantidade.value) {
-                 validateAndStoreQuantity();
+            // Limpa o valor do campo que está sendo escondido
+            if (!isInternal) {
+                raInput.value = '';
             }
+
+            // 2. Alterna o campo Telefone
+            phoneGroup.classList.toggle('active', !isInternal);
+            phoneGroup.classList.toggle('input-hidden', isInternal);
+            phoneInput.required = !isInternal;
+            
+            // Limpa o valor do campo que está sendo escondido
+            if (isInternal) {
+                phoneInput.value = '';
+            }
+        }
+
+        /**
+         * Inicia o download de um arquivo JSON.
+         * @param {object} data Objeto com os dados do registro.
+         * @param {string} filename Nome do arquivo.
+         */
+        function downloadJSON(data, filename) {
+            const dataStr = JSON.stringify(data, null, 2); // Formata o JSON
+            const blob = new Blob([dataStr], { type: "application/json" });
+            
+            // Cria um link temporário para iniciar o download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            
+            // Simula um clique para iniciar o download
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+
+        // --- Event Listeners ---
+
+        // Listener para os botões de rádio (Interno/Externo)
+        radios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                handleUserTypeChange(e.target.value);
+            });
         });
+
+        // Listener para o envio do formulário
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Coleta de dados
+            const userType = document.querySelector('input[name="user_type"]:checked')?.value || 'N/A';
+            const fullName = document.getElementById('full_name').value;
+            const ra = document.getElementById('ra').value;
+            const phone = document.getElementById('phone').value;
+            
+            // Coleta de interesses
+            const selectedInterests = Array.from(document.querySelectorAll('input[name="interests"]:checked'))
+                                           .map(checkbox => checkbox.value);
+            
+            // Monta o objeto de registro
+            const formData = {
+                id: Date.now(), // ID simples baseado no timestamp
+                userType: userType,
+                fullName: fullName,
+                identifier: userType === 'interno' ? ra : phone,
+                identifierType: userType === 'interno' ? 'RA' : 'Telefone',
+                interests: selectedInterests,
+                timestamp: new Date().toISOString()
+            };
+
+            // 1. Salva/Baixa o arquivo JSON
+            // IMPORTANTE: O usuário precisará salvar o arquivo na sua pasta "data/"
+            downloadJSON(formData, "registros.json"); 
+            
+            // 2. Feedback visual
+            showMessage('Registro enviado! Baixe o arquivo "registros.json" e salve-o na pasta "data/".', 'success');
+
+            // 3. Limpa o formulário após o envio
+            form.reset();
+            handleUserTypeChange(null); // Reseta a visualização condicional
+        });
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            renderInterests();
+        });
+
     </script>
 </body>
 </html>
